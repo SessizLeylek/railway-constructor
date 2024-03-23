@@ -43,6 +43,6 @@ public struct Arc
     /// <param name="t">t = [0, 1], 0 is the start and 1 is the end point of the arc</param>
     public Vector3 ReturnTangentVector(float t = 0)
     {
-        return Vector3.Cross(ReturnPoint(t), orthogonalVector).normalized;
+        return Vector3.Cross(ReturnPoint(t), orthogonalVector).normalized * Mathf.Sign(-arcAngle);  //Well i am so sleepy right now, i do not know there needs to be Mathf.Sign(-arcAngle)
     }
 }
