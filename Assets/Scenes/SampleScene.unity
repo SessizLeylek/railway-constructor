@@ -148,7 +148,7 @@ Transform:
   m_GameObject: {fileID: 52889909}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -4.492}
+  m_LocalPosition: {x: 0, y: 0, z: -5.616}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -336,7 +336,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   trackPrefab: {fileID: 4312459554330315542, guid: dd17550ed55a8fd4796f30dc7729ff33,
     type: 3}
-  trackCount: 80
+  trackCount: 600
 --- !u!4 &360981795
 Transform:
   m_ObjectHideFlags: 0
@@ -548,10 +548,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9fc676b841eca3f42a45df75e35ec234, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cars:
-  - {fileID: 1940256863}
+  singleCarObject: {fileID: 1940256861}
   speed: 20
-  trainRoute: []
+  carCount: 4
 --- !u!4 &1800659045
 Transform:
   m_ObjectHideFlags: 0
@@ -692,8 +691,8 @@ Transform:
   m_GameObject: {fileID: 919132148402629198}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: -2.271}
-  m_LocalScale: {x: 0.6, y: 0.6, z: 0.6}
+  m_LocalPosition: {x: 0, y: 0, z: -2.84}
+  m_LocalScale: {x: 0.75, y: 0.75, z: 0.75}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 9156863249093217479}

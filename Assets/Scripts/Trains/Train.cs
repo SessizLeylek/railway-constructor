@@ -4,30 +4,83 @@ using UnityEngine;
 
 public class Train : MonoBehaviour
 {
-    public TrainCar[] cars;
+    public TrainRoute route;
+    public GameObject singleCarObject;
     public float speed = 20;
+    public int carCount = 1;
 
-    [HideInInspector] public SingleTrack[] trainRoute;
-    int routePosition = 0;
+    TrainCar[] cars;
     float metersTravelled = 0;
 
     void Start()
     {
-        
+        cars = new TrainCar[carCount];
+        cars[0] = singleCarObject.GetComponent<TrainCar>();
+        for (int i = 1; i < carCount; i++)
+        {
+            cars[i] = Instantiate(singleCarObject, transform).GetComponent<TrainCar>();
+        }
     }
 
     void Update()
     {
-        if(routePosition < trainRoute.Length)
-        {
-            cars[0].UpdateTrainPosition(trainRoute[routePosition].transform.position + trainRoute[routePosition].arc.ReturnPoint(metersTravelled / trainRoute[routePosition].arc.Length));
+        if(metersTravelled + Time.deltaTime * speed < route.routeLength)
+            metersTravelled += Time.deltaTime * speed;
 
-            metersTravelled += speed * Time.deltaTime;
-            if(metersTravelled > trainRoute[routePosition].arc.Length)
+        for (int i = 0; i < carCount; i++)
+        {
+            cars[i].UpdateTrainPosition(route.PositionFromDistance(metersTravelled - i * 8));
+        }
+
+    }
+}
+
+public class TrainRoute
+{
+    public float routeLength;
+
+    SingleTrack[] tracks;
+    float[] trackDistances;
+    float[] maxSpeeds;
+
+    public TrainRoute(SingleTrack[] _tracks)
+    {
+        tracks = _tracks;
+
+        float distanceTraveled = 0;
+        trackDistances = new float[tracks.Length];
+        maxSpeeds = new float[tracks.Length];
+        for(int i = 0; i < tracks.Length; i++)
+        {
+            trackDistances[i] = distanceTraveled;
+            distanceTraveled += tracks[i].arc.Length;
+
+            maxSpeeds[i] = tracks[i].arc.Radius * 0.1f + 1.5f;
+        }
+
+        routeLength = distanceTraveled;
+    }
+
+    int trackPosition(float distanceFromStart)
+    {
+        for (int i = 0; i < tracks.Length; i++)
+        {
+            float d = distanceFromStart - trackDistances[i];
+            if (d < tracks[i].arc.Length && d > 0)
             {
-                metersTravelled -= trainRoute[routePosition].arc.Length;
-                routePosition++;
+                return i;
             }
         }
+
+        return -1;
+    }
+
+    public Vector3 PositionFromDistance(float distanceFromStart)
+    {
+        int trackPos = trackPosition(distanceFromStart);
+
+        if(trackPos == -1) return Vector3.zero;
+
+        return tracks[trackPos].transform.position + tracks[trackPos].arc.ReturnPoint((distanceFromStart - trackDistances[trackPos]) / tracks[trackPos].arc.Length);
     }
 }

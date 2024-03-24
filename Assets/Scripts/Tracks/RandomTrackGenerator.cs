@@ -31,7 +31,7 @@ public class RandomTrackGenerator : MonoBehaviour
             tracks[i] = newTrack;
         }
 
-        FindObjectOfType<Train>().trainRoute = tracks;
+        FindObjectOfType<Train>().route = new TrainRoute(tracks);
     }
 
     void Update()

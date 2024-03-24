@@ -1,0 +1,2 @@
+world space is 2.5x smaller than real world
+track gauge is 1435 mm = 0.574 units
