@@ -18,7 +18,7 @@ public class RandomTrackGenerator : MonoBehaviour
         {
             int randDir = Random.Range(0, 2) * 2 - 1;
             float randAngle = Random.Range(15f, 180f) * randDir;
-            float randRadius = Random.Range(5, 26);
+            float randRadius = Random.Range(5, 101);
             Vector3 differenceVector = Vector3.Cross(Vector3.up, previousDirection).normalized * randRadius * (-randDir);
 
             SingleTrack newTrack = Instantiate(trackPrefab).GetComponent<SingleTrack>();
@@ -36,6 +36,6 @@ public class RandomTrackGenerator : MonoBehaviour
 
     void Update()
     {
-        
+
     }
 }
