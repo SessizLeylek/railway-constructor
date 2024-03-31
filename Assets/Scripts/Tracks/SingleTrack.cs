@@ -6,6 +6,8 @@ using UnityEngine;
 public class SingleTrack : MonoBehaviour
 {
     public Arc arc;
+    public SingleTrack[] connectionsFromHead;
+    public SingleTrack[] connectionsFromTail;
 
     Mesh mesh;
 
