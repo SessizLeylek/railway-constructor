@@ -22,8 +22,7 @@ public class RandomTrackGenerator : MonoBehaviour
             Vector3 differenceVector = Vector3.Cross(Vector3.up, previousDirection).normalized * randRadius * (-randDir);
 
             SingleTrack newTrack = Instantiate(trackPrefab).GetComponent<SingleTrack>();
-            newTrack.transform.position = previousPosition - differenceVector;
-            newTrack.arc = new Arc(differenceVector, Vector3.up, randAngle);
+            newTrack.Initialize(new Arc(differenceVector, Vector3.up, randAngle), previousPosition - differenceVector, _headConnection: (i == 0 ? null : tracks[i - 1].tailConnection));
 
             previousPosition = newTrack.arc.ReturnPoint(1) + newTrack.transform.position;
             previousDirection = newTrack.arc.ReturnTangentVector(1);
@@ -31,7 +30,7 @@ public class RandomTrackGenerator : MonoBehaviour
             tracks[i] = newTrack;
         }
 
-        FindObjectOfType<Train>().route = new TrainRoute(tracks);
+        //FindObjectOfType<Train>().route = new TrainRoute(tracks);
     }
 
     void Update()

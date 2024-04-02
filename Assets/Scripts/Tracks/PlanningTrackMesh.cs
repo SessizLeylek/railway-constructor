@@ -7,10 +7,10 @@ using UnityEngine;
 
 public class PlanningTrackMesh : MonoBehaviour
 {
-    [SerializeField] PlanningNode headNode;
-    int headDirectionMultiplier = 1;    // Multiplies the direction vector of head node
-    [SerializeField] PlanningNode tailNode;
-    int tailDirectionMultiplier = 1;    // Multiplies the direction vector of tail node
+    public PlanningNode headNode;
+    public int headDirectionMultiplier = 1;    // Multiplies the direction vector of head node
+    public PlanningNode tailNode;
+    public int tailDirectionMultiplier = 1;    // Multiplies the direction vector of tail node
 
     Mesh mesh;
     MeshFilter meshFilter;
@@ -86,8 +86,8 @@ public class PlanningTrackMesh : MonoBehaviour
 
         mesh = new Mesh();
 
-        int mesh1Length = Mathf.CeilToInt(arc1.Length);
-        int mesh2Length = Mathf.CeilToInt(arc2.Length);
+        int mesh1Length = Mathf.Max(0, Mathf.CeilToInt(arc1.Length));
+        int mesh2Length = Mathf.Max(0, Mathf.CeilToInt(arc2.Length));
 
         Vector3[] finalVertexArray = new Vector3[(mesh1Length + mesh2Length) * 2 + 2];
         int[] finalTriangleArray = new int[(mesh1Length + mesh2Length) * 6];
