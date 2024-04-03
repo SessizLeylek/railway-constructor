@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class PlanningNode : MonoBehaviour
 {
-    public bool fixedPosition = false;
-    [HideInInspector] public Vector3 nodeDirection;
+    public bool isFixed = false;    // Fixed nodes cannot be moved, rotated or deleted
+    public Vector3 nodeDirection;
     [HideInInspector] public TrackConnectionPoint connectionPoint = null;
     PlanningNode[] connectedNodes;
 
@@ -13,7 +13,7 @@ public class PlanningNode : MonoBehaviour
     {
         if (worldPosition != null) transform.position = worldPosition.Value;
         if(nodeDirection != null) this.nodeDirection = nodeDirection.Value;
-        this.fixedPosition = fixedPosition;
+        this.isFixed = fixedPosition;
         this.connectionPoint = connectionPoint;
     }
 }

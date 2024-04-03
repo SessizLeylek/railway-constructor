@@ -39,6 +39,21 @@ public class SingleTrack : MonoBehaviour
 
     void Start()
     {
+        GenerateMeshFromArc();
+    }
+        
+    void Update()
+    {
+        Debug.DrawRay(arc.ReturnPoint(1) + transform.position, arc.ReturnTangentVector(1), Color.yellow);
+    }
+
+    private void OnDestroy()
+    {
+        TrackManager.instance.RemoveTrack(this);
+    }
+
+    void GenerateMeshFromArc()
+    {
         #region MESH_GENERATION
         mesh = new Mesh();
 
@@ -58,7 +73,7 @@ public class SingleTrack : MonoBehaviour
 
         //Creating the mesh faces
         int[] triangleArray = new int[meshLength * 6];
-        for(int i = 0; i < meshLength; i++)
+        for (int i = 0; i < meshLength; i++)
         {
             triangleArray[i * 6] = i * 2;
             triangleArray[i * 6 + 1] = i * 2 + 1;
@@ -71,7 +86,7 @@ public class SingleTrack : MonoBehaviour
 
         //Defining the uvs
         Vector2[] uvArray = new Vector2[vertexArray.Length];
-        for(int i = 0;i < meshLength + 1;i++)
+        for (int i = 0; i < meshLength + 1; i++)
         {
             uvArray[i * 2] = new Vector2(1, i % 2);
             uvArray[i * 2 + 1] = new Vector2(0, i % 2);
@@ -82,16 +97,6 @@ public class SingleTrack : MonoBehaviour
         GetComponent<MeshFilter>().mesh = mesh;
         GetComponent<MeshCollider>().sharedMesh = mesh;
         #endregion
-    }
-
-    void Update()
-    {
-        Debug.DrawRay(arc.ReturnPoint(1) + transform.position, arc.ReturnTangentVector(1), Color.yellow);
-    }
-
-    private void OnDestroy()
-    {
-        TrackManager.instance.RemoveTrack(this);
     }
 
     /// <summary>

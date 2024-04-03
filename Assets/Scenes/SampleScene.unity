@@ -879,13 +879,15 @@ MonoBehaviour:
     type: 3}
   planningTrackPrefab: {fileID: 5424272161173724278, guid: cbcfc130536140247a6e34a97045459d,
     type: 3}
+  planningNodePrefab: {fileID: 2142254041849843491, guid: 54f60bd8ec3e9a240b4e8866f2fee229,
+    type: 3}
   mainCamera: {fileID: 330585545}
   terrainLayer:
     serializedVersion: 2
     m_Bits: 64
-  railLayer:
+  interactionLayer:
     serializedVersion: 2
-    m_Bits: 128
+    m_Bits: 384
 --- !u!1 &376766574
 GameObject:
   m_ObjectHideFlags: 0

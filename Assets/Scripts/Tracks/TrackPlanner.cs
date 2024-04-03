@@ -9,9 +9,10 @@ public class TrackPlanner : MonoBehaviour
     GameObject[] trackTips;
 
     [SerializeField] GameObject planningTrackPrefab;
+    [SerializeField] GameObject planningNodePrefab;
     [SerializeField] Camera mainCamera;
     [SerializeField] LayerMask terrainLayer;
-    [SerializeField] LayerMask railLayer;
+    [SerializeField] LayerMask interactionLayer;
 
     PlanningNode nodeInUse = null;  // Node in use for extending, moving and rotating
     Vector3 prevNodePosition = Vector3.zero;    // Node's previous position before moving
@@ -37,59 +38,70 @@ public class TrackPlanner : MonoBehaviour
             case PlanningState.Idle:
                 // PLAN MODE ACTIVE, NO ACTION IS SELECTED //
                 {
-                    if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, 500, railLayer))
+                    if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, 500, interactionLayer))
                     {
-                        // Raycasting tracks
-                        SingleTrack track = hit.transform.GetComponent<SingleTrack>();
-
-                        int rectCount = (hit.collider as MeshCollider).sharedMesh.triangles.Length / 6 - 1;
-                        float raycastTValue = (hit.triangleIndex / 2) / (float)rectCount;
-
-                        if (hit.triangleIndex < 2)
+                        if (hit.transform.CompareTag("rail"))
                         {
-                            // If the head of the track is raycasted, ...
+                            // Raycasting tracks
+                            SingleTrack track = hit.transform.GetComponent<SingleTrack>();
 
-                            if (Input.GetMouseButtonDown(0))
+                            int rectCount = (hit.collider as MeshCollider).sharedMesh.triangles.Length / 6 - 1;
+                            float raycastTValue = (hit.triangleIndex / 2) / (float)rectCount;
+
+                            if (hit.triangleIndex < 2)
                             {
-                                //To start extending a track from the head, create two planning nodes and a planning track mesh
+                                // If the head of the track is raycasted, ...
 
-                                PlanningTrackMesh planTrack = Instantiate(planningTrackPrefab).GetComponent<PlanningTrackMesh>();
-                                planTrack.headNode.transform.position = track.ReturnPointWorldPosition(0);
-                                planTrack.headNode.fixedPosition = true;
-                                planTrack.headNode.nodeDirection = track.arc.ReturnTangentVector(0);
-                                planTrack.headNode.connectionPoint = track.headConnection;
-                                prevNodePosition = planTrack.headNode.transform.position;
-                                nodeInUse = planTrack.tailNode;
+                                if (Input.GetMouseButtonDown(0))
+                                {
+                                    //To start extending a track from the head, create two planning nodes and a planning track mesh
 
-                                planningState = PlanningState.Extending;
+                                    PlanningTrackMesh planTrack = Instantiate(planningTrackPrefab).GetComponent<PlanningTrackMesh>();
+                                    PlanningNode planNode0 = Instantiate(planningNodePrefab).GetComponent<PlanningNode>();
+                                    PlanningNode planNode1 = Instantiate(planningNodePrefab).GetComponent<PlanningNode>();
+                                    planTrack.SetNodes(planNode0, planNode1);
+                                    planNode0.SetValues(track.ReturnPointWorldPosition(0), track.arc.ReturnTangentVector(0), true, track.headConnection);
+                                    prevNodePosition = planNode0.transform.position;
+                                    nodeInUse = planNode1;
+
+                                    planningState = PlanningState.Extending;
+                                }
                             }
-                        }
-                        else if (hit.triangleIndex / 2 == rectCount)
-                        {
-                            // If the tail of the track is raycasted, ...
-
-                            if (Input.GetMouseButtonDown(0))
+                            else if (hit.triangleIndex / 2 == rectCount)
                             {
-                                //To start extending a track from the tail, create two planning nodes and a planning track mesh
+                                // If the tail of the track is raycasted, ...
 
-                                PlanningTrackMesh planTrack = Instantiate(planningTrackPrefab).GetComponent<PlanningTrackMesh>();
-                                planTrack.headNode.transform.position = track.ReturnPointWorldPosition(1);
-                                planTrack.headNode.fixedPosition = true;
-                                planTrack.headNode.nodeDirection = track.arc.ReturnTangentVector(1);
-                                planTrack.headNode.connectionPoint = track.tailConnection;
-                                prevNodePosition = planTrack.headNode.transform.position;
-                                nodeInUse = planTrack.tailNode;
+                                if (Input.GetMouseButtonDown(0))
+                                {
+                                    //To start extending a track from the tail, create two planning nodes and a planning track mesh
 
-                                planningState = PlanningState.Extending;
+                                    PlanningTrackMesh planTrack = Instantiate(planningTrackPrefab).GetComponent<PlanningTrackMesh>();
+                                    PlanningNode planNode0 = Instantiate(planningNodePrefab).GetComponent<PlanningNode>();
+                                    PlanningNode planNode1 = Instantiate(planningNodePrefab).GetComponent<PlanningNode>();
+                                    planTrack.SetNodes(planNode0, planNode1);
+                                    planNode0.SetValues(track.ReturnPointWorldPosition(1), track.arc.ReturnTangentVector(1), true, track.tailConnection);
+                                    prevNodePosition = planNode0.transform.position;
+                                    nodeInUse = planNode1;
+
+                                    planningState = PlanningState.Extending;
+                                }
                             }
-                        }
-                        else
+                            else
+                            {
+                                // If another section of the track is raycasted, ...
+
+                            }
+
+                            Debug.DrawRay(track.ReturnPointWorldPosition(raycastTValue), Vector3.up * 5, Color.blue);
+
+                        }   // TRACK RAYCASTING
+                        else if (hit.transform.CompareTag("node"))
                         {
-                            // If another section of the track is raycasted, ...
+                            // Raycasting planning nodes
 
-                        }
 
-                        Debug.DrawRay(track.ReturnPointWorldPosition(raycastTValue), Vector3.up * 5, Color.blue);
+
+                        }   // PLANNING NODE RAYCASTING
                     }
                 }
                 break;
