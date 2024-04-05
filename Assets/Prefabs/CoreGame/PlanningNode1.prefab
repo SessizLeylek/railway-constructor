@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 2855254147430260561}
   - component: {fileID: 409189255753796713}
   - component: {fileID: 8489594431082281225}
+  - component: {fileID: -9079609437122441802}
   m_Layer: 8
   m_Name: PlanningNode1
   m_TagString: node
@@ -98,3 +99,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isFixed: 0
   nodeDirection: {x: 0, y: 0, z: 0}
+--- !u!135 &-9079609437122441802
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2142254041849843491}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}

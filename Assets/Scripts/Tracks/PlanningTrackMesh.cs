@@ -36,15 +36,47 @@ public class PlanningTrackMesh : MonoBehaviour
 
     void FixedUpdate()
     {
-        UpdateMesh();
+        if(headNode && tailNode)
+            UpdateMesh();
     }
 
+    /// <summary>
+    /// Sets the node variables for this object
+    /// </summary>
     public void SetNodes(PlanningNode headNode, PlanningNode tailNode, int headDirectionMultiplier = 1, int tailDirectionMultiplier = 1)
     {
+        headNode.connectedTracks.Add(this);
+        tailNode.connectedTracks.Add(this);
+
         this.headNode = headNode;
         this.tailNode = tailNode;
         this.headDirectionMultiplier = headDirectionMultiplier;
         this.tailDirectionMultiplier = tailDirectionMultiplier;
+    }
+
+    /// <summary>
+    /// Removes the planning track mesh and the nodes that are connected only to it
+    /// </summary>
+    public void RemoveTrack()
+    {
+        if(headNode != null)
+        {
+            headNode.connectedTracks.Remove(this);
+            if(headNode.connectedTracks.Count == 0)
+            {
+                headNode.RemoveNode();
+            }
+        }
+        if (tailNode != null)
+        {
+            tailNode.connectedTracks.Remove(this);
+            if (tailNode.connectedTracks.Count == 0)
+            {
+                tailNode.RemoveNode();
+            }
+        }
+
+        Destroy(gameObject);
     }
 
     void UpdateMesh()
