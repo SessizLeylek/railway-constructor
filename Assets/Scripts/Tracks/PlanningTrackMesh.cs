@@ -76,7 +76,48 @@ public class PlanningTrackMesh : MonoBehaviour
             }
         }
 
+        TrackManager.instance.planner.planningTracks.Remove(this);
+
         Destroy(gameObject);
+    }
+
+    /// <summary>
+    /// Replaces the planning tracks and nodes with single tracks
+    /// </summary>
+    public void ConstruckTracks()
+    {
+        // Create the tracks
+        if (isLine)
+        {
+
+        }
+        else if(formedBySingleArc)
+        {
+            SingleTrack newTrack = Instantiate(trackPrefab).GetComponent<SingleTrack>();
+            newTrack.Initialize(arc1, arc1Position, headNode.connectionPoint, tailNode.connectionPoint);
+
+            headNode.connectionPoint.ConnectTrack(newTrack);
+            tailNode.connectionPoint.ConnectTrack(newTrack);
+        }
+        else
+        {
+            TrackConnectionPoint middleConnection = new TrackConnectionPoint(null, arc2.ReturnPoint() + arc2Position);
+
+            SingleTrack newTrack = Instantiate(trackPrefab).GetComponent<SingleTrack>();
+            newTrack.Initialize(arc1, arc1Position, headNode.connectionPoint, middleConnection);
+
+            headNode.connectionPoint.ConnectTrack(newTrack);
+            middleConnection.ConnectTrack(newTrack);
+
+            SingleTrack newTrack2 = Instantiate(trackPrefab).GetComponent<SingleTrack>();
+            newTrack2.Initialize(arc2, arc2Position, middleConnection, tailNode.connectionPoint);
+
+            middleConnection.ConnectTrack(newTrack2);
+            tailNode.connectionPoint.ConnectTrack(newTrack2);
+        }
+
+        //Destroy self
+        RemoveTrack();
     }
 
     void UpdateMesh()
@@ -150,10 +191,26 @@ public class PlanningTrackMesh : MonoBehaviour
             Vector3[] finalVertexArray = new Vector3[(mesh1Length + mesh2Length) * 2 + 2];
             int[] finalTriangleArray = new int[(mesh1Length + mesh2Length) * 6];
 
-            if (mesh1Length == 0)
+            if(mesh1Length == 0)
+            {
+                formedBySingleArc = true;
+
+                arc1 = arc2;
+                arc1Position = arc2Position;
+            }
+            else if (mesh2Length == 0)
+            {
+                formedBySingleArc = true;
+            }
+            else
+            {
+                formedBySingleArc = false;
+            }
+
+            if (formedBySingleArc)
             {
                 // Create the mesh with only arc2 if arc1 is 0
-                var meshProps = CalculateMeshProperties(ref arc2, ref arc2Position);
+                var meshProps = CalculateMeshProperties(ref arc1, ref arc1Position);
                 meshProps.Item1.CopyTo(finalVertexArray, 0);
                 meshProps.Item2.CopyTo(finalTriangleArray, 0);
             }
@@ -177,20 +234,6 @@ public class PlanningTrackMesh : MonoBehaviour
 
         mesh.RecalculateBounds();
         meshFilter.mesh = mesh;
-
-        // for testing purposes
-        if (dbgCreateTracks)
-        {
-            dbgCreateTracks = false;
-
-            SingleTrack newTrack = Instantiate(trackPrefab).GetComponent<SingleTrack>();
-            newTrack.transform.position = arc1Position;
-            newTrack.arc = arc1;
-
-            SingleTrack newTrack2 = Instantiate(trackPrefab).GetComponent<SingleTrack>();
-            newTrack2.transform.position = arc2Position;
-            newTrack2.arc = arc2;
-        }
     }
 
     (Vector3[], int[]) CalculateMeshProperties(ref Arc _arc, ref Vector3 _arcPos, int triangleShifter = 0)

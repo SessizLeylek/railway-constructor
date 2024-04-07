@@ -18,8 +18,16 @@ public class TrackPlanner : MonoBehaviour
     PlanningNode nodeInUse = null;  // Node in use for extending, moving and rotating
     Vector3 prevNodePosition = Vector3.zero;    // Node's previous position before moving
 
+    [HideInInspector] public List<PlanningNode> planningNodes = new List<PlanningNode>();
+    [HideInInspector] public List<PlanningTrackMesh> planningTracks = new List<PlanningTrackMesh>();
+
     enum PlanningState { Inactive, Idle, Extending, Moving, Rotating }
     PlanningState planningState = PlanningState.Inactive;
+
+    void Awake()
+    {
+        TrackManager.instance.planner = this;
+    }
 
     void Start()
     {
@@ -33,7 +41,22 @@ public class TrackPlanner : MonoBehaviour
             case PlanningState.Inactive:
                 // NO PLANNING //
 
-                planningState = PlanningState.Idle;
+                if (Input.GetKeyDown(KeyCode.Tab))
+                {
+                    // Activate all planning nodes and tracks then switch to idle
+
+                    foreach (PlanningNode planNode in planningNodes)
+                    {
+                        planNode.gameObject.SetActive(true);
+                    }
+
+                    foreach (PlanningTrackMesh planTrack in planningTracks)
+                    {
+                        planTrack.gameObject.SetActive(true);
+                    }
+
+                    planningState = PlanningState.Idle;
+                }
 
                 break;
             case PlanningState.Idle:
@@ -67,6 +90,10 @@ public class TrackPlanner : MonoBehaviour
 
                                     planNode1.GetComponent<SphereCollider>().enabled = false;   // Temporarily disable the collider to avoid issues
 
+                                    planningTracks.Add(planTrack);
+                                    planningNodes.Add(planNode0);
+                                    planningNodes.Add(planNode1);
+
                                     planningState = PlanningState.Extending;
                                 }
                             }
@@ -88,12 +115,18 @@ public class TrackPlanner : MonoBehaviour
 
                                     planNode1.GetComponent<SphereCollider>().enabled = false;   // Temporarily disable the collider to avoid issues
 
+                                    planningTracks.Add(planTrack);
+                                    planningNodes.Add(planNode0);
+                                    planningNodes.Add(planNode1);
+
                                     planningState = PlanningState.Extending;
                                 }
                             }
                             else
                             {
                                 // If another section of the track is raycasted, ...
+
+
 
                             }
 
@@ -116,6 +149,9 @@ public class TrackPlanner : MonoBehaviour
                                 nodeInUse = newPlanNode;
 
                                 newPlanNode.GetComponent<SphereCollider>().enabled = false;
+
+                                planningTracks.Add(planTrack);
+                                planningNodes.Add(newPlanNode);
 
                                 planningState = PlanningState.Extending;
                             }
@@ -146,6 +182,47 @@ public class TrackPlanner : MonoBehaviour
 
                         }   // PLANNING NODE RAYCASTING
                     }
+
+                    if (Input.GetKeyDown(KeyCode.S))
+                    {
+                        // Saving the plan
+
+                        foreach (PlanningNode planNode in planningNodes)
+                        {
+                            if (planNode.connectionPoint == null)
+                                planNode.connectionPoint = new TrackConnectionPoint(null, planNode.transform.position);
+                        }
+
+                        while (planningTracks.Count > 0)
+                        {
+                            planningTracks[0].ConstruckTracks();
+                        }
+                    }
+                    else if (Input.GetKeyDown(KeyCode.Tab))
+                    {
+                        //Hide the plan and switch state to inactive
+
+                        foreach (PlanningNode planNode in planningNodes)
+                        {
+                            planNode.gameObject.SetActive(false);
+                        }
+
+                        foreach (PlanningTrackMesh planTrack in planningTracks)
+                        {
+                            planTrack.gameObject.SetActive(false);
+                        }
+
+                        planningState = PlanningState.Inactive;
+                    }
+                    else if (Input.GetKeyDown(KeyCode.X))
+                    {
+                        // Delete the plan
+
+                        while (planningTracks.Count > 0)
+                        {
+                            planningTracks[0].RemoveTrack();
+                        }
+                    }
                 }
                 break;
             case PlanningState.Extending:
@@ -169,12 +246,12 @@ public class TrackPlanner : MonoBehaviour
                                 {
                                     // Left clicking connects the two nodes
 
-                                    PlanningNode headNode = nodeInUse.connectedTracks[0].headNode;
+                                    PlanningTrackMesh planTrack = Instantiate(planningTrackPrefab).GetComponent<PlanningTrackMesh>();
+                                    planTrack.SetNodes(nodeInUse.connectedTracks[0].headNode, nodeToConnect);
 
                                     nodeInUse.RemoveNode(); // This section removes the created track and recreates it. I am too lazy to implement a better solution
 
-                                    PlanningTrackMesh planTrack = Instantiate(planningTrackPrefab).GetComponent<PlanningTrackMesh>();
-                                    planTrack.SetNodes(headNode, nodeToConnect);
+                                    planningTracks.Add(planTrack);
 
                                     planningState = PlanningState.Idle;
                                 }

@@ -13,8 +13,15 @@ public class TrackConnectionPoint
     /// <param name="track">First track conneceted</param>
     public TrackConnectionPoint(SingleTrack track, Vector3 worldPosition)
     {
-        connectedTracks = new SingleTrack[1];
-        connectedTracks[0] = track;
+        if(track != null)
+        {
+            connectedTracks = new SingleTrack[1];
+            connectedTracks[0] = track;
+        }
+        else
+        {
+            connectedTracks = new SingleTrack[0];
+        }
 
         TrackManager.instance.connectionPoints.Add(this);
         this.worldPosition = worldPosition;

@@ -30,6 +30,8 @@ public class PlanningNode : MonoBehaviour
             connectedTracks[0].RemoveTrack();
         }
 
+        TrackManager.instance.planner.planningNodes.Remove(this);
+
         Destroy(gameObject);
     }
 }

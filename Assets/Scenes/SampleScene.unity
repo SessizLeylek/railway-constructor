@@ -400,8 +400,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1.0000002, z: 0.2}
-  m_Center: {x: 0, y: 0, z: 0.1}
+  m_Size: {x: 1, y: 1.0000002, z: 0.1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &99825004
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -461,7 +461,7 @@ Transform:
   m_GameObject: {fileID: 99825002}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: -0.001, z: 0}
+  m_LocalPosition: {x: 0, y: -0.05, z: 0}
   m_LocalScale: {x: 40, y: 40, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -888,6 +888,8 @@ MonoBehaviour:
   interactionLayer:
     serializedVersion: 2
     m_Bits: 384
+  planningNodes: []
+  planningTracks: []
 --- !u!1 &376766574
 GameObject:
   m_ObjectHideFlags: 0
@@ -2006,6 +2008,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4c23fc0e91d8dc44b9a06841bb825686, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  planner: {fileID: 0}
   tracks: []
 --- !u!4 &1695719275
 Transform:
