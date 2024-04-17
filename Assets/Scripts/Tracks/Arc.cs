@@ -45,4 +45,12 @@ public struct Arc
     {
         return Vector3.Cross(ReturnPoint(t), orthogonalVector).normalized * Mathf.Sign(-arcAngle);  //Well i am so sleepy right now, i do not know there needs to be Mathf.Sign(-arcAngle)
     }
+
+    public static Arc zero
+    {
+        get
+        {
+            return new Arc(Vector3.zero, Vector3.zero, 0);
+        }
+    }
 }

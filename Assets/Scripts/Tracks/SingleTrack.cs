@@ -2,10 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 [RequireComponent(typeof(MeshFilter))]
 public class SingleTrack : MonoBehaviour
 {
+    public bool isLine = false;
     public Arc arc;
     public TrackConnectionPoint headConnection;
     public TrackConnectionPoint tailConnection;
@@ -24,12 +26,21 @@ public class SingleTrack : MonoBehaviour
     /// <param name="_position">World position of the origin of the track</param>
     /// <param name="_headConnection">Connection Point at the head of the track, do not assign if it is not connected</param>
     /// <param name="_tailConnection">Connection Point at the end of the track, do not assign if it is not connected</param>
-    public void Initialize(Arc _arc, Vector3 _position, TrackConnectionPoint _headConnection = null, TrackConnectionPoint _tailConnection = null)
+    public void Initialize(Arc? _arc, Vector3? _position, TrackConnectionPoint _headConnection = null, TrackConnectionPoint _tailConnection = null)
     {
-        arc = _arc;
-        transform.position = _position;
+        if (_arc == null || _position == null)
+        {
+            // Initialize as a line
+            isLine = true;
+        }
+        else
+        {
+            // Initialize as an arc
+            arc = _arc.Value;
+            transform.position = _position.Value;
+        }
 
-        //Assigning connections if not assigned
+        //Assigning new connections if not assigned
         if (_headConnection == null) headConnection = new TrackConnectionPoint(this, arc.ReturnPoint(0) + transform.position);
         else headConnection = _headConnection;
 
@@ -39,7 +50,10 @@ public class SingleTrack : MonoBehaviour
 
     void Start()
     {
-        GenerateMeshFromArc();
+        if (isLine)
+            GenerateMeshFromLine();
+        else
+            GenerateMeshFromArc();
     }
         
     void Update()
@@ -52,9 +66,37 @@ public class SingleTrack : MonoBehaviour
         TrackManager.instance.RemoveTrack(this);
     }
 
+    /// <summary>
+    /// Removes the track
+    /// </summary>
+    public void RemoveTrack()
+    {
+        headConnection.DisconnectTrack(this);
+        tailConnection.DisconnectTrack(this);
+
+        Destroy(gameObject);
+    }
+
+    void GenerateMeshFromLine()
+    {
+        Vector3 ov = Vector3.Cross(tailConnection.worldPosition - headConnection.worldPosition, Vector3.up);
+        mesh.vertices = new Vector3[] { headConnection.worldPosition - ov * 0.5f,
+                                            headConnection.worldPosition + ov * 0.5f,
+                                            tailConnection.worldPosition - ov * 0.5f,
+                                            tailConnection.worldPosition + ov * 0.5f};
+        mesh.triangles = new int[] { 0, 1, 2, 1, 3, 2 };
+        mesh.uv = new Vector2[] {   new Vector2(0, 0),
+                                    new Vector2(1, 0),
+                                    new Vector2(0, 1 / ov.magnitude),
+                                    new Vector2(1, 1 / ov.magnitude)};
+
+        mesh.RecalculateBounds();
+        GetComponent<MeshFilter>().mesh = mesh;
+        GetComponent<MeshCollider>().sharedMesh = mesh;
+    }
+
     void GenerateMeshFromArc()
     {
-        #region MESH_GENERATION
         mesh = new Mesh();
 
         // Creating the mesh vertices
@@ -96,7 +138,6 @@ public class SingleTrack : MonoBehaviour
         mesh.RecalculateBounds();
         GetComponent<MeshFilter>().mesh = mesh;
         GetComponent<MeshCollider>().sharedMesh = mesh;
-        #endregion
     }
 
     /// <summary>
@@ -106,6 +147,9 @@ public class SingleTrack : MonoBehaviour
     /// <returns>A point on the arc</returns>
     public Vector3 ReturnPointWorldPosition(float t = 0)
     {
-        return arc.ReturnPoint(t) + transform.position;
+        if (isLine)
+            return Vector3.Lerp(headConnection.worldPosition, tailConnection.worldPosition, t);
+        else
+            return arc.ReturnPoint(t) + transform.position;
     }
 }

@@ -5,36 +5,58 @@ using UnityEngine;
 public class Train : MonoBehaviour
 {
     public TrainRoute route;
+    public TrainCar headCar;
+    public TrainCar middleCar;
+    public TrainCar tailCar;
+    public int carCount;
     public float maxSpeed = 20;
     public float acceleration = 10;
-    public TrainCar[] cars;
+    public bool isMoving = true;
+
+    TrainCar[] cars;
     float currentSpeed = 0;
     float metersTravelled = 0;
 
     void Start()
     {
+        // Adjusting the train size
+        cars = new TrainCar[carCount];
+        if(headCar != null) cars[0] = headCar;
+        if (tailCar != null) cars[carCount - 1] = tailCar;
+        for (int i = 0; i < carCount; i++)
+        {
+            if (cars[i] == null) 
+            {
+                cars[i] = Instantiate(middleCar, transform);
+                cars[i].gameObject.SetActive(true);
+            } 
+        }
     }
 
     void FixedUpdate()
     {
-        float futureMaxSpeed = route.MaxSpeedFromDistance(metersTravelled + (currentSpeed * currentSpeed * 0.5f / acceleration)) * 5;
-
-        if (futureMaxSpeed > currentSpeed)
-            currentSpeed += acceleration * Time.fixedDeltaTime;
-        else if(futureMaxSpeed < currentSpeed)
-            currentSpeed -= acceleration * Time.fixedDeltaTime;
-
-        if(currentSpeed > maxSpeed)
-            currentSpeed = maxSpeed;
-        else if(currentSpeed < 0)
-            currentSpeed = 0;
-
-        if(metersTravelled + Time.fixedDeltaTime * currentSpeed < route.routeLength)
-            metersTravelled += Time.fixedDeltaTime * currentSpeed;
-
-        for (int i = 0; i < cars.Length; i++)
+        if (isMoving)
         {
-            cars[i].UpdateTrainPosition(route.PositionFromDistance(metersTravelled - i * cars[0].carLength));
+            float futureMaxSpeed = route.MaxSpeedFromDistance(metersTravelled + (currentSpeed * currentSpeed * 0.5f / acceleration)) * 5;
+
+            if (futureMaxSpeed > currentSpeed)
+                currentSpeed += acceleration * Time.fixedDeltaTime;
+            else if (futureMaxSpeed < currentSpeed)
+                currentSpeed -= acceleration * Time.fixedDeltaTime;
+
+            if (currentSpeed > maxSpeed)
+                currentSpeed = maxSpeed;
+            else if (currentSpeed < 0)
+                currentSpeed = 0;
+
+            if (metersTravelled + Time.fixedDeltaTime * currentSpeed < route.routeLength)
+                metersTravelled += Time.fixedDeltaTime * currentSpeed;
+
+            for (int i = 0; i < carCount; i++)
+            {
+                float frontPos = metersTravelled - i * (i == 0 ? 0 : cars[i - 1].carLength);
+                cars[i].UpdateTrainPosition(route.PositionFromDistance(frontPos), route.PositionFromDistance(frontPos - cars[i].wheelsWidth));
+            }
         }
     }
 }
@@ -44,6 +66,7 @@ public class TrainRoute
     public float routeLength;
 
     SingleTrack[] tracks;
+    bool[] invertedTrackDirection;    // train goes from tail to head if set to true
     float[] trackDistances;
     float[] maxSpeeds;
 
@@ -52,6 +75,7 @@ public class TrainRoute
         tracks = _tracks;
 
         float distanceTraveled = 0;
+        invertedTrackDirection = new bool[tracks.Length];
         trackDistances = new float[tracks.Length];
         maxSpeeds = new float[tracks.Length];
         for(int i = 0; i < tracks.Length; i++)
@@ -60,6 +84,8 @@ public class TrainRoute
             distanceTraveled += tracks[i].arc.Length;
 
             maxSpeeds[i] = tracks[i].arc.Radius * 0.04f + 0.6f;
+
+            
         }
 
         routeLength = distanceTraveled;
@@ -86,7 +112,8 @@ public class TrainRoute
 
         if(trackPos == -1) return Vector3.zero;
 
-        return tracks[trackPos].transform.position + tracks[trackPos].arc.ReturnPoint((distanceFromStart - trackDistances[trackPos]) / tracks[trackPos].arc.Length);
+        float positionValue = (distanceFromStart - trackDistances[trackPos]) / tracks[trackPos].arc.Length;
+        return tracks[trackPos].transform.position + tracks[trackPos].arc.ReturnPoint(invertedTrackDirection[trackPos] ? 1 - positionValue : positionValue);
     }
 
     public float MaxSpeedFromDistance(float distanceFromStart)

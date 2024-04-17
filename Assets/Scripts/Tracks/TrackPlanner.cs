@@ -17,6 +17,7 @@ public class TrackPlanner : MonoBehaviour
 
     PlanningNode nodeInUse = null;  // Node in use for extending, moving and rotating
     Vector3 prevNodePosition = Vector3.zero;    // Node's previous position before moving
+    Vector3 firstNodeDirection = Vector3.forward;   // Direction of the first node while extending
 
     [HideInInspector] public List<PlanningNode> planningNodes = new List<PlanningNode>();
     [HideInInspector] public List<PlanningTrackMesh> planningTracks = new List<PlanningTrackMesh>();
@@ -40,24 +41,39 @@ public class TrackPlanner : MonoBehaviour
         {
             case PlanningState.Inactive:
                 // NO PLANNING //
-
-                if (Input.GetKeyDown(KeyCode.Tab))
                 {
-                    // Activate all planning nodes and tracks then switch to idle
-
-                    foreach (PlanningNode planNode in planningNodes)
+                    if (Input.GetKeyDown(KeyCode.Tab))
                     {
-                        planNode.gameObject.SetActive(true);
+                        // Activate all planning nodes and tracks then switch to idle
+
+                        foreach (PlanningNode planNode in planningNodes)
+                        {
+                            planNode.gameObject.SetActive(true);
+                        }
+
+                        foreach (PlanningTrackMesh planTrack in planningTracks)
+                        {
+                            planTrack.gameObject.SetActive(true);
+                        }
+
+                        planningState = PlanningState.Idle;
                     }
 
-                    foreach (PlanningTrackMesh planTrack in planningTracks)
+                    if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, 500, interactionLayer))
                     {
-                        planTrack.gameObject.SetActive(true);
-                    }
+                        if (hit.transform.CompareTag("rail"))
+                        {
+                            //Raycasting rails while not in planning
 
-                    planningState = PlanningState.Idle;
+                            if (Input.GetKeyDown(KeyCode.Backspace))
+                            {
+                                //Pressing backspace while hovering a rail, removes it
+
+                                hit.transform.GetComponent<SingleTrack>().RemoveTrack();
+                            }
+                        }
+                    }
                 }
-
                 break;
             case PlanningState.Idle:
                 // PLAN MODE ACTIVE, NO ACTION IS SELECTED //
@@ -85,8 +101,10 @@ public class TrackPlanner : MonoBehaviour
                                     PlanningNode planNode1 = Instantiate(planningNodePrefab).GetComponent<PlanningNode>();
                                     planTrack.SetNodes(planNode0, planNode1);
                                     planNode0.SetValues(track.ReturnPointWorldPosition(0), track.arc.ReturnTangentVector(0), true, track.headConnection);
-                                    prevNodePosition = planNode0.transform.position;
                                     nodeInUse = planNode1;
+
+                                    prevNodePosition = planNode0.transform.position;
+                                    firstNodeDirection = planNode0.nodeDirection;
 
                                     planNode1.GetComponent<SphereCollider>().enabled = false;   // Temporarily disable the collider to avoid issues
 
@@ -110,8 +128,10 @@ public class TrackPlanner : MonoBehaviour
                                     PlanningNode planNode1 = Instantiate(planningNodePrefab).GetComponent<PlanningNode>();
                                     planTrack.SetNodes(planNode0, planNode1);
                                     planNode0.SetValues(track.ReturnPointWorldPosition(1), track.arc.ReturnTangentVector(1), true, track.tailConnection);
-                                    prevNodePosition = planNode0.transform.position;
                                     nodeInUse = planNode1;
+
+                                    prevNodePosition = planNode0.transform.position;
+                                    firstNodeDirection = planNode0.nodeDirection;
 
                                     planNode1.GetComponent<SphereCollider>().enabled = false;   // Temporarily disable the collider to avoid issues
 
@@ -147,6 +167,9 @@ public class TrackPlanner : MonoBehaviour
                                 PlanningNode newPlanNode = Instantiate(planningNodePrefab).GetComponent<PlanningNode>();
                                 planTrack.SetNodes(currentPlanNode, newPlanNode);
                                 nodeInUse = newPlanNode;
+
+                                prevNodePosition = currentPlanNode.transform.position;
+                                firstNodeDirection = currentPlanNode.nodeDirection;
 
                                 newPlanNode.GetComponent<SphereCollider>().enabled = false;
 
@@ -264,7 +287,11 @@ public class TrackPlanner : MonoBehaviour
                             // Extending a new track
 
                             nodeInUse.transform.position = hit.point;
-                            nodeInUse.nodeDirection = (nodeInUse.transform.position - prevNodePosition).normalized; // This method does not form an arc, CHANGE THIS
+                            nodeInUse.nodeDirection = (firstNodeDirection - Vector3.ProjectOnPlane(firstNodeDirection, prevNodePosition - nodeInUse.transform.position) * 2).normalized;
+
+                            Debug.DrawRay(prevNodePosition, firstNodeDirection * 3, Color.blue);
+                            Debug.DrawRay(hit.point, nodeInUse.nodeDirection * 3, Color.blue);
+                            Debug.DrawLine(prevNodePosition, hit.point, Color.yellow);
 
                             if (Input.GetMouseButtonDown(0))
                             {

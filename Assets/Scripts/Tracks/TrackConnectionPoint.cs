@@ -6,6 +6,7 @@ public class TrackConnectionPoint
 {
     public SingleTrack[] connectedTracks;
     public Vector3 worldPosition;
+    public bool vehicleOnTop = false;   // True if there is a train on top
 
     /// <summary>
     /// Stores the all tracks connected at one point

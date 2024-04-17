@@ -89,10 +89,16 @@ public class PlanningTrackMesh : MonoBehaviour
         // Create the tracks
         if (isLine)
         {
+            // Create a linear single track
+            SingleTrack newTrack = Instantiate(trackPrefab).GetComponent<SingleTrack>();
+            newTrack.Initialize(null, null, headNode.connectionPoint, tailNode.connectionPoint);
 
+            headNode.connectionPoint.ConnectTrack(newTrack);
+            tailNode.connectionPoint.ConnectTrack(newTrack);
         }
         else if(formedBySingleArc)
         {
+            // Create a single track from an arc
             SingleTrack newTrack = Instantiate(trackPrefab).GetComponent<SingleTrack>();
             newTrack.Initialize(arc1, arc1Position, headNode.connectionPoint, tailNode.connectionPoint);
 
@@ -101,6 +107,7 @@ public class PlanningTrackMesh : MonoBehaviour
         }
         else
         {
+            // Create two single tracks from two arcs
             TrackConnectionPoint middleConnection = new TrackConnectionPoint(null, arc2.ReturnPoint() + arc2Position);
 
             SingleTrack newTrack = Instantiate(trackPrefab).GetComponent<SingleTrack>();

@@ -6,32 +6,37 @@ public class TrainCar : MonoBehaviour
 {
     public Transform rearWheels;
     public float carLength;
-    float wheelsDistance;
+    public float wheelsWidth;
 
     //Tweening variables
-    Vector3 prevPosition;
-    Vector3 prevForward;
-    Vector3 desiredPosition;
-    Vector3 desiredForward;
+    Vector3 prevFrontPos;
+    Vector3 prevRearPos;
+    Vector3 desiredFrontPos;
+    Vector3 desiredRearPos;
+    Vector3 backWheelsPos;
 
     void Start()
     {
-        wheelsDistance = rearWheels.localPosition.magnitude;
+
     }
 
     void Update()
     {
         // Tweening position
-        transform.position += (desiredPosition - prevPosition) * Time.deltaTime / Time.fixedDeltaTime;
-        transform.forward += (desiredForward - prevForward) * Time.deltaTime / Time.fixedDeltaTime;
+        transform.position += (desiredFrontPos - prevFrontPos) * Time.deltaTime / Time.fixedDeltaTime;
+        backWheelsPos += (desiredRearPos - prevRearPos) * Time.deltaTime / Time.fixedDeltaTime;
+        transform.forward = (transform.position - backWheelsPos).normalized;
     }
 
-    public void UpdateTrainPosition(Vector3 frontPosition)
+    public void UpdateTrainPosition(Vector3 frontPosition, Vector3 rearPosition)
     {
-        prevPosition = desiredPosition;
-        prevForward = desiredForward;
+        // transform.position = desiredFrontPos;
+        // backWheelsPos = desiredRearPos;
 
-        desiredForward = (frontPosition * 2 - rearWheels.position - desiredPosition).normalized;
-        desiredPosition = frontPosition;
+        prevFrontPos = desiredFrontPos;
+        prevRearPos = desiredRearPos;
+
+        desiredRearPos = rearPosition;
+        desiredFrontPos = frontPosition;
     }
 }
