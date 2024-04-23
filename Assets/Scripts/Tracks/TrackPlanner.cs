@@ -22,7 +22,10 @@ public class TrackPlanner : MonoBehaviour
     [HideInInspector] public List<PlanningNode> planningNodes = new List<PlanningNode>();
     [HideInInspector] public List<PlanningTrackMesh> planningTracks = new List<PlanningTrackMesh>();
 
-    enum PlanningState { Inactive, Idle, Extending, Moving, Rotating }
+    List<SingleTrack> draftRouteTracks = new List<SingleTrack>();
+    List<bool> draftRouteInverse = new List<bool>();    // if true, trains will move from the head to the end of the corresponding rail
+
+    enum PlanningState { Inactive, TrackEditIdle, TrackEditExtending, TrackEditMoving, TrackEditRotating, RouteEditIdle, RouteEditExtending }
     PlanningState planningState = PlanningState.Inactive;
 
     void Awake()
@@ -56,7 +59,7 @@ public class TrackPlanner : MonoBehaviour
                             planTrack.gameObject.SetActive(true);
                         }
 
-                        planningState = PlanningState.Idle;
+                        planningState = PlanningState.TrackEditIdle;
                     }
 
                     if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, 500, interactionLayer))
@@ -71,11 +74,21 @@ public class TrackPlanner : MonoBehaviour
 
                                 hit.transform.GetComponent<SingleTrack>().RemoveTrack();
                             }
+                            else if (Input.GetKeyDown(KeyCode.G))
+                            {
+                                // Pressing double quote starts route planning
+                                draftRouteTracks.Add(hit.transform.GetComponent<SingleTrack>());
+                                draftRouteInverse.Add(false);
+
+                                Debug.Log("ROUTE EDIT STARTED");
+
+                                planningState = PlanningState.RouteEditExtending;
+                            }
                         }
                     }
                 }
                 break;
-            case PlanningState.Idle:
+            case PlanningState.TrackEditIdle:
                 // PLAN MODE ACTIVE, NO ACTION IS SELECTED //
                 {
                     if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, 500, interactionLayer))
@@ -112,7 +125,7 @@ public class TrackPlanner : MonoBehaviour
                                     planningNodes.Add(planNode0);
                                     planningNodes.Add(planNode1);
 
-                                    planningState = PlanningState.Extending;
+                                    planningState = PlanningState.TrackEditExtending;
                                 }
                             }
                             else if (hit.triangleIndex / 2 == rectCount)
@@ -139,7 +152,7 @@ public class TrackPlanner : MonoBehaviour
                                     planningNodes.Add(planNode0);
                                     planningNodes.Add(planNode1);
 
-                                    planningState = PlanningState.Extending;
+                                    planningState = PlanningState.TrackEditExtending;
                                 }
                             }
                             else
@@ -176,7 +189,7 @@ public class TrackPlanner : MonoBehaviour
                                 planningTracks.Add(planTrack);
                                 planningNodes.Add(newPlanNode);
 
-                                planningState = PlanningState.Extending;
+                                planningState = PlanningState.TrackEditExtending;
                             }
                             else if (Input.GetKeyDown(KeyCode.Backspace))
                             {
@@ -191,7 +204,7 @@ public class TrackPlanner : MonoBehaviour
                                 nodeInUse = hit.transform.GetComponent<PlanningNode>();
 
                                 if(!nodeInUse.isFixed)
-                                    planningState = PlanningState.Moving;
+                                    planningState = PlanningState.TrackEditMoving;
                             }
                             else if (Input.GetKeyDown(KeyCode.R))
                             {
@@ -200,7 +213,7 @@ public class TrackPlanner : MonoBehaviour
                                 nodeInUse = hit.transform.GetComponent<PlanningNode>();
 
                                 if (!nodeInUse.isFixed)
-                                    planningState = PlanningState.Rotating;
+                                    planningState = PlanningState.TrackEditRotating;
                             }
 
                         }   // PLANNING NODE RAYCASTING
@@ -248,7 +261,7 @@ public class TrackPlanner : MonoBehaviour
                     }
                 }
                 break;
-            case PlanningState.Extending:
+            case PlanningState.TrackEditExtending:
                 // EXTENDING AN TRACK //
                 {
                     // Positioning the node in use to set the end point of the track
@@ -276,7 +289,7 @@ public class TrackPlanner : MonoBehaviour
 
                                     planningTracks.Add(planTrack);
 
-                                    planningState = PlanningState.Idle;
+                                    planningState = PlanningState.TrackEditIdle;
                                 }
                             }
 
@@ -300,13 +313,13 @@ public class TrackPlanner : MonoBehaviour
                                 nodeInUse.GetComponent<SphereCollider>().enabled = true;    // Renabling the collider of the node
                                 nodeInUse = null;
 
-                                planningState = PlanningState.Idle;
+                                planningState = PlanningState.TrackEditIdle;
                             }
                         }
                     }
                 }
                 break;
-            case PlanningState.Moving:
+            case PlanningState.TrackEditMoving:
                 // MOVING A PLANNING NODE //
                 {
                     if(nodeInUse != null && Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, 500, terrainLayer))
@@ -316,12 +329,12 @@ public class TrackPlanner : MonoBehaviour
                         if (Input.GetMouseButtonDown(0))
                         {
                             // Left clicking confirms the node positioning
-                            planningState = PlanningState.Idle;
+                            planningState = PlanningState.TrackEditIdle;
                         }
                     }
                 }
                 break;
-            case PlanningState.Rotating:
+            case PlanningState.TrackEditRotating:
                 // CHANGING THE DIRECTION OF A PLANNING NODE //
                 {
                     if (nodeInUse != null && Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, 500, terrainLayer))
@@ -331,7 +344,74 @@ public class TrackPlanner : MonoBehaviour
                         if (Input.GetMouseButtonDown(0))
                         {
                             // Left clicking confirms the node rotating
-                            planningState = PlanningState.Idle;
+                            planningState = PlanningState.TrackEditIdle;
+                        }
+                    }
+                }
+                break;
+            case PlanningState.RouteEditExtending: 
+                // ROUTE PLANNING, 
+                {
+                    if (Input.GetKeyDown(KeyCode.S))
+                    {
+                        // Pressing S saves the route
+
+                        var train = FindObjectOfType<Train>();
+                        if (train != null)
+                        {
+                            train.route = new TrainRoute(draftRouteTracks.ToArray(), draftRouteInverse.ToArray());
+                            draftRouteTracks.Clear();
+                            draftRouteInverse.Clear();
+
+                            Debug.Log("ROUTE SAVED");
+                        }
+
+                        planningState = PlanningState.Inactive;
+                    }
+                    else if (Input.GetKeyDown(KeyCode.X))
+                    {
+                        // Pressing x deletes the route
+
+                        draftRouteTracks.Clear();
+                        draftRouteInverse.Clear();
+
+                        planningState = PlanningState.Inactive;
+                    }
+                    else if (Input.GetKeyDown(KeyCode.G))
+                    {
+                        // Hide the route planning and switch to inactive
+
+                        planningState = PlanningState.Inactive;
+                    }
+
+                    if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, 500, interactionLayer))
+                    {
+                        if (hit.transform.CompareTag("rail"))
+                        {
+                            //Raycasting rails
+
+                            if (Input.GetMouseButtonDown(0))
+                            {
+                                // Clicking a rail adds it to the route
+
+                                draftRouteTracks.Add(hit.transform.GetComponent<SingleTrack>());
+                                draftRouteInverse.Add(false);
+
+                                Debug.Log("TRACK ADDED TO ROUTE");
+                            }
+                            else if (Input.GetMouseButtonDown(1))
+                            {
+                                // Right clicking a rail removes it from the route
+
+                                int railIndex = draftRouteTracks.IndexOf(hit.transform.GetComponent<SingleTrack>());
+                                if(railIndex > -1)
+                                {
+                                    draftRouteTracks.RemoveAt(railIndex);
+                                    draftRouteInverse.RemoveAt(railIndex);
+
+                                    Debug.Log("TRACK REMOVED FROM ROUTE");
+                                }
+                            }
                         }
                     }
                 }

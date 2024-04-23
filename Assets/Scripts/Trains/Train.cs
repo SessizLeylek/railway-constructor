@@ -50,7 +50,7 @@ public class Train : MonoBehaviour
 
             // Check if next track's max speed is lower or next connection point is occupied
             nextTrackP = route.trackPosition(metersTravelled) + 1;
-            if (nextTrackP >= route.tracks.Length) { metersTravelled = 0; return; }
+            if (nextTrackP >= route.tracks.Length) nextTrackP = route.tracks.Length - 1;
             nextTrackMaxSpeed = route.maxSpeeds[nextTrackP];
 
             float decPos = (currentSpeed * currentSpeed - nextTrackMaxSpeed * nextTrackMaxSpeed) / acceleration * 0.5f;
@@ -93,12 +93,12 @@ public class TrainRoute
     /// <summary>
     /// Stores the route information consisting of single tracks
     /// </summary>
-    public TrainRoute(SingleTrack[] _tracks)
+    public TrainRoute(SingleTrack[] _tracks, bool[] trackInverse)
     {
         tracks = _tracks;
 
         float distanceTraveled = 0;
-        invertedTrackDirection = new bool[tracks.Length];
+        invertedTrackDirection = trackInverse;
         trackDistances = new float[tracks.Length];
         maxSpeeds = new float[tracks.Length];
         for(int i = 0; i < tracks.Length; i++)
