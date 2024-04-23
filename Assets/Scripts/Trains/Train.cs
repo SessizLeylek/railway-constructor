@@ -14,8 +14,13 @@ public class Train : MonoBehaviour
     public bool isMoving = true;
 
     TrainCar[] cars;
+    float totalCarLength;
     float currentSpeed = 0;
     float metersTravelled = 0;
+    float currentMaxSpeed = 0;
+    int nextTrackP = 0;
+    float nextTrackMaxSpeed = 0;
+    bool decelerate = false;
 
     void Start()
     {
@@ -25,11 +30,15 @@ public class Train : MonoBehaviour
         if (tailCar != null) cars[carCount - 1] = tailCar;
         for (int i = 0; i < carCount; i++)
         {
+            // Create new cars
             if (cars[i] == null) 
             {
                 cars[i] = Instantiate(middleCar, transform);
                 cars[i].gameObject.SetActive(true);
-            } 
+            }
+
+            //Calculate total length by adding car lengths
+            totalCarLength += cars[i].carLength;
         }
     }
 
@@ -37,21 +46,32 @@ public class Train : MonoBehaviour
     {
         if (isMoving)
         {
-            float futureMaxSpeed = route.MaxSpeedFromDistance(metersTravelled + (currentSpeed * currentSpeed * 0.5f / acceleration)) * 5;
+            currentMaxSpeed = route.MaxSpeedBetweenRange(metersTravelled - totalCarLength, metersTravelled);
 
-            if (futureMaxSpeed > currentSpeed)
-                currentSpeed += acceleration * Time.fixedDeltaTime;
-            else if (futureMaxSpeed < currentSpeed)
-                currentSpeed -= acceleration * Time.fixedDeltaTime;
+            // Check if next track's max speed is lower or next connection point is occupied
+            nextTrackP = route.trackPosition(metersTravelled) + 1;
+            if (nextTrackP >= route.tracks.Length) { metersTravelled = 0; return; }
+            nextTrackMaxSpeed = route.maxSpeeds[nextTrackP];
 
-            if (currentSpeed > maxSpeed)
-                currentSpeed = maxSpeed;
-            else if (currentSpeed < 0)
-                currentSpeed = 0;
+            float decPos = (currentSpeed * currentSpeed - nextTrackMaxSpeed * nextTrackMaxSpeed) / acceleration * 0.5f;
+            decelerate = (decPos >= route.trackDistances[nextTrackP] - metersTravelled) || 
+                (!route.invertedTrackDirection[nextTrackP] && route.tracks[nextTrackP].headConnection.vehicleOnTop) ||
+                (route.invertedTrackDirection[nextTrackP] && route.tracks[nextTrackP].tailConnection.vehicleOnTop);
+
+            // Accelerate if needed
+            if (decelerate || currentMaxSpeed < currentSpeed) currentSpeed -= acceleration * Time.fixedDeltaTime;
+            else if (currentMaxSpeed > currentSpeed) currentSpeed += acceleration * Time.fixedDeltaTime;
+
+            Debug.DrawRay(route.PositionFromDistance(route.trackDistances[nextTrackP] - decPos), Vector3.up *5, decelerate ? Color.red : Color.green, 0.25f);
+
+            // Clamp the speed
+            if (currentSpeed > maxSpeed) currentSpeed = maxSpeed;
+            else if (currentSpeed < 0) currentSpeed = 0;
 
             if (metersTravelled + Time.fixedDeltaTime * currentSpeed < route.routeLength)
                 metersTravelled += Time.fixedDeltaTime * currentSpeed;
 
+            // Update positions of train cars
             for (int i = 0; i < carCount; i++)
             {
                 float frontPos = metersTravelled - i * (i == 0 ? 0 : cars[i - 1].carLength);
@@ -65,11 +85,14 @@ public class TrainRoute
 {
     public float routeLength;
 
-    SingleTrack[] tracks;
-    bool[] invertedTrackDirection;    // train goes from tail to head if set to true
-    float[] trackDistances;
-    float[] maxSpeeds;
+    public SingleTrack[] tracks;
+    public bool[] invertedTrackDirection;    // train goes from tail to head if set to true
+    public float[] trackDistances;
+    public float[] maxSpeeds;
 
+    /// <summary>
+    /// Stores the route information consisting of single tracks
+    /// </summary>
     public TrainRoute(SingleTrack[] _tracks)
     {
         tracks = _tracks;
@@ -83,7 +106,7 @@ public class TrainRoute
             trackDistances[i] = distanceTraveled;
             distanceTraveled += tracks[i].arc.Length;
 
-            maxSpeeds[i] = tracks[i].arc.Radius * 0.04f + 0.6f;
+            maxSpeeds[i] = Mathf.Pow(tracks[i].arc.Radius * 0.04f + 0.6f, 2) * 3;
 
             
         }
@@ -92,8 +115,11 @@ public class TrainRoute
     }
 
     // Track's index according to the distance from the start
-    int trackPosition(float distanceFromStart)
+    public int trackPosition(float distanceFromStart)
     {
+        if (distanceFromStart < 0)
+            return 0;
+
         for (int i = 0; i < tracks.Length; i++)
         {
             float d = distanceFromStart - trackDistances[i];
@@ -103,34 +129,54 @@ public class TrainRoute
             }
         }
 
-        return -1;
+        return tracks.Length - 1;
     }
 
+    /// <summary>
+    /// Returns the world position, according to the relative position to the start point
+    /// </summary>
     public Vector3 PositionFromDistance(float distanceFromStart)
     {
         int trackPos = trackPosition(distanceFromStart);
-
-        if(trackPos == -1) return Vector3.zero;
 
         float positionValue = (distanceFromStart - trackDistances[trackPos]) / tracks[trackPos].arc.Length;
         return tracks[trackPos].transform.position + tracks[trackPos].arc.ReturnPoint(invertedTrackDirection[trackPos] ? 1 - positionValue : positionValue);
     }
 
+    /// <summary>
+    /// Returns the max speed, according to the relative position to the start point
+    /// </summary>
     public float MaxSpeedFromDistance(float distanceFromStart)
     {
         int tr = trackPosition(distanceFromStart);
-        if (tr == -1)
-            return 0;
-        else
-            return maxSpeeds[tr];
+        return maxSpeeds[tr];
     }
 
+    /// <summary>
+    /// Returns the max speed between the range, according to the relative positions to the start point
+    /// </summary>
+    public float MaxSpeedBetweenRange(float rangeStart, float rangeEnd)
+    {
+        int tr0 = trackPosition(rangeStart);
+        int tr1 = trackPosition(rangeEnd);
+
+        float maxSpeed = 360;
+
+        for (int i = tr0; i <= tr1; i++)
+        {
+            if (maxSpeeds[i] < maxSpeed)
+                maxSpeed = maxSpeeds[i];
+        }
+
+        return maxSpeed;
+    }
+
+    /// <summary>
+    /// Returns the track, according to the relative position to the start point
+    /// </summary>
     public SingleTrack TrackFromDistance(float distanceFromStart)
     {
         int tr = trackPosition(distanceFromStart);
-        if (tr == -1)
-            return null;
-        else
-            return tracks[tr];
+        return tracks[tr];
     }
 }

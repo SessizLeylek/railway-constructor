@@ -377,9 +377,9 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 99825002}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: -0.05, z: 0}
-  m_LocalScale: {x: 40, y: 40, z: 1}
+  m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: 25, y: -0.05000305, z: 30}
+  m_LocalScale: {x: 120, y: 120.000046, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -587,7 +587,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0.25000006, y: 0.25000006, z: -0.06698733, w: 0.9330127}
-  m_LocalPosition: {x: -6, y: 8, z: -12}
+  m_LocalPosition: {x: -12, y: 16, z: -24}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1619,6 +1619,7 @@ MonoBehaviour:
   carCount: 5
   maxSpeed: 30
   acceleration: 3
+  isMoving: 0
 --- !u!4 &1800659045
 Transform:
   m_ObjectHideFlags: 0
@@ -2352,7 +2353,7 @@ SceneRoots:
   - {fileID: 410087041}
   - {fileID: 832575519}
   - {fileID: 330585546}
+  - {fileID: 99825006}
   - {fileID: 1695719275}
   - {fileID: 360981795}
-  - {fileID: 99825006}
   - {fileID: 1800659045}

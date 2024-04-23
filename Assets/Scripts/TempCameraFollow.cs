@@ -12,7 +12,7 @@ public class TempCameraFollow : MonoBehaviour
         positionDifference = transform.position - target.position;
     }
 
-    void Update()
+    void LateUpdate()
     {
         transform.position = positionDifference + target.position;
     }

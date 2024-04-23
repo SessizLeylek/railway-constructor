@@ -9,10 +9,8 @@ public class TrainCar : MonoBehaviour
     public float wheelsWidth;
 
     //Tweening variables
-    Vector3 prevFrontPos;
-    Vector3 prevRearPos;
-    Vector3 desiredFrontPos;
-    Vector3 desiredRearPos;
+    Vector3 frontWheelLerpDir;
+    Vector3 backWheelLerpDir;
     Vector3 backWheelsPos;
 
     void Start()
@@ -23,8 +21,8 @@ public class TrainCar : MonoBehaviour
     void Update()
     {
         // Tweening position
-        transform.position += (desiredFrontPos - prevFrontPos) * Time.deltaTime / Time.fixedDeltaTime;
-        backWheelsPos += (desiredRearPos - prevRearPos) * Time.deltaTime / Time.fixedDeltaTime;
+        transform.position += frontWheelLerpDir * Time.deltaTime;
+        backWheelsPos += backWheelLerpDir * Time.deltaTime;
         transform.forward = (transform.position - backWheelsPos).normalized;
     }
 
@@ -33,10 +31,7 @@ public class TrainCar : MonoBehaviour
         // transform.position = desiredFrontPos;
         // backWheelsPos = desiredRearPos;
 
-        prevFrontPos = desiredFrontPos;
-        prevRearPos = desiredRearPos;
-
-        desiredRearPos = rearPosition;
-        desiredFrontPos = frontPosition;
+        frontWheelLerpDir = (frontPosition - transform.position) / Time.fixedDeltaTime;
+        backWheelLerpDir = (rearPosition - backWheelsPos) / Time.fixedDeltaTime;
     }
 }
