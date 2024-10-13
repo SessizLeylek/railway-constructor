@@ -29,6 +29,8 @@ public class PlanningTrackMesh : MonoBehaviour
     public bool dbgCreateTracks = false;
     public GameObject trackPrefab;
 
+    const float HALF_WIDTH = 0.25f;
+
     void Start()
     {
         meshFilter = GetComponent<MeshFilter>();
@@ -142,10 +144,10 @@ public class PlanningTrackMesh : MonoBehaviour
 
         if (isLine)
         {
-            mesh.vertices = new Vector3[] { headNode.transform.position - Vector3.Cross(v, upVector).normalized * 0.5f,
-                                            headNode.transform.position + Vector3.Cross(v, upVector).normalized * 0.5f,
-                                            tailNode.transform.position - Vector3.Cross(v, upVector).normalized * 0.5f,
-                                            tailNode.transform.position + Vector3.Cross(v, upVector).normalized * 0.5f};
+            mesh.vertices = new Vector3[] { headNode.transform.position - Vector3.Cross(v, upVector).normalized * HALF_WIDTH,
+                                            headNode.transform.position + Vector3.Cross(v, upVector).normalized * HALF_WIDTH,
+                                            tailNode.transform.position - Vector3.Cross(v, upVector).normalized * HALF_WIDTH,
+                                            tailNode.transform.position + Vector3.Cross(v, upVector).normalized * HALF_WIDTH};
             mesh.triangles = new int[] { 0, 1, 2, 1, 3, 2};
         }  // CREATING THE MESH WITH A LINE
         else
@@ -246,7 +248,7 @@ public class PlanningTrackMesh : MonoBehaviour
     (Vector3[], int[]) CalculateMeshProperties(ref Arc _arc, ref Vector3 _arcPos, int triangleShifter = 0)
     {
         // Creating the mesh vertices
-        float vertOrientation = Mathf.Sign(_arc.Angle) * 0.5f;
+        float vertOrientation = Mathf.Sign(_arc.Angle) * HALF_WIDTH;
         int meshLength = Mathf.CeilToInt(_arc.Length);
 
         Vector3[] vertexArray = new Vector3[meshLength * 2 + 2];

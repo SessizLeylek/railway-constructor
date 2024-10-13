@@ -78,6 +78,9 @@ public class Train : MonoBehaviour
                 cars[i].UpdateTrainPosition(route.PositionFromDistance(frontPos), route.PositionFromDistance(frontPos - cars[i].wheelsWidth));
             }
         }
+
+        if(Input.GetKey(KeyCode.B))
+            isMoving = true;
     }
 }
 

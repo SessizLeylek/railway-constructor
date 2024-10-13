@@ -8,6 +8,20 @@ public class PlanningNode : MonoBehaviour
     public Vector3 nodeDirection;
     [HideInInspector] public TrackConnectionPoint connectionPoint = null;
     [HideInInspector] public List<PlanningTrackMesh> connectedTracks = new List<PlanningTrackMesh>();
+    Camera mainCamera;
+    Billboard billboard;
+    [HideInInspector] public bool mirrorBillboard = false;
+
+    private void Start()
+    {
+        mainCamera = Camera.main;
+        billboard = GetComponentInChildren<Billboard>();
+    }
+
+    private void LateUpdate()
+    {
+        billboard.upDirection = Vector3.Cross(mainCamera.transform.forward, nodeDirection) * (mirrorBillboard ? -1 : 1);
+    }
 
     /// <summary>
     /// Set the necessary variables

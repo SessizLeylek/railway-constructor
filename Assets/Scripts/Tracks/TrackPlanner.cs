@@ -25,6 +25,8 @@ public class TrackPlanner : MonoBehaviour
     List<SingleTrack> draftRouteTracks = new List<SingleTrack>();
     List<bool> draftRouteInverse = new List<bool>();    // if true, trains will move from the head to the end of the corresponding rail
 
+    Highlightable lastHighlighted = null;
+
     enum PlanningState { Inactive, TrackEditIdle, TrackEditExtending, TrackEditMoving, TrackEditRotating, RouteEditIdle, RouteEditExtending }
     PlanningState planningState = PlanningState.Inactive;
 
@@ -40,6 +42,12 @@ public class TrackPlanner : MonoBehaviour
 
     void Update()
     {
+        if (lastHighlighted)
+        {
+            lastHighlighted.Dehighlight();
+            lastHighlighted = null;
+        }
+
         switch (planningState)
         {
             case PlanningState.Inactive:
@@ -68,6 +76,8 @@ public class TrackPlanner : MonoBehaviour
                         {
                             //Raycasting rails while not in planning
 
+                            Highlight(hit.transform.GetComponent<Highlightable>());
+                            
                             if (Input.GetKeyDown(KeyCode.Backspace))
                             {
                                 //Pressing backspace while hovering a rail, removes it
@@ -81,6 +91,11 @@ public class TrackPlanner : MonoBehaviour
                                 draftRouteInverse.Add(false);
 
                                 Debug.Log("ROUTE EDIT STARTED");
+
+                                foreach (SingleTrack st in draftRouteTracks)
+                                {
+                                    st.GetComponent<Highlightable>().Highlight();
+                                }
 
                                 planningState = PlanningState.RouteEditExtending;
                             }
@@ -170,15 +185,19 @@ public class TrackPlanner : MonoBehaviour
                         {
                             // Raycasting planning nodes
 
+                            PlanningNode currentPlanNode = hit.transform.GetComponent<PlanningNode>();
+                            bool mirrorOperation = Vector3.Dot(hit.point - hit.transform.position, currentPlanNode.nodeDirection) < 0 ;
+
+                            currentPlanNode.mirrorBillboard = mirrorOperation;
+                            Highlight(hit.transform.GetComponent<Highlightable>());
+
                             if (Input.GetMouseButtonDown(0))
                             {
                                 // To extend an existing planning node, create another planning node and a planning track
 
-                                PlanningNode currentPlanNode = hit.transform.GetComponent<PlanningNode>();
-
                                 PlanningTrackMesh planTrack = Instantiate(planningTrackPrefab).GetComponent<PlanningTrackMesh>();
                                 PlanningNode newPlanNode = Instantiate(planningNodePrefab).GetComponent<PlanningNode>();
-                                planTrack.SetNodes(currentPlanNode, newPlanNode);
+                                planTrack.SetNodes(currentPlanNode, newPlanNode, mirrorOperation ? -1 : 1);
                                 nodeInUse = newPlanNode;
 
                                 prevNodePosition = currentPlanNode.transform.position;
@@ -195,13 +214,13 @@ public class TrackPlanner : MonoBehaviour
                             {
                                 // Removing a planning node
 
-                                hit.transform.GetComponent<PlanningNode>().RemoveNode();
+                                currentPlanNode.RemoveNode();
                             }
                             else if (Input.GetKeyDown(KeyCode.T))
                             {
                                 // Moving a planning node
 
-                                nodeInUse = hit.transform.GetComponent<PlanningNode>();
+                                nodeInUse = currentPlanNode;
 
                                 if(!nodeInUse.isFixed)
                                     planningState = PlanningState.TrackEditMoving;
@@ -210,7 +229,7 @@ public class TrackPlanner : MonoBehaviour
                             {
                                 // Rotating a planning node
 
-                                nodeInUse = hit.transform.GetComponent<PlanningNode>();
+                                nodeInUse = currentPlanNode;
 
                                 if (!nodeInUse.isFixed)
                                     planningState = PlanningState.TrackEditRotating;
@@ -273,6 +292,10 @@ public class TrackPlanner : MonoBehaviour
 
                             if (_hit.transform.CompareTag("node"))
                             {
+
+                                Highlight(_hit.transform.GetComponent<Highlightable>());
+
+                                // node connecting
                                 PlanningNode nodeToConnect = _hit.transform.GetComponent<PlanningNode>();
 
                                 nodeInUse.transform.position = nodeToConnect.transform.position;
@@ -359,6 +382,11 @@ public class TrackPlanner : MonoBehaviour
                         var train = FindObjectOfType<Train>();
                         if (train != null)
                         {
+                            foreach(SingleTrack st in draftRouteTracks)
+                            {
+                                st.GetComponent<Highlightable>().Dehighlight();
+                            }
+
                             train.route = new TrainRoute(draftRouteTracks.ToArray(), draftRouteInverse.ToArray());
                             draftRouteTracks.Clear();
                             draftRouteInverse.Clear();
@@ -372,6 +400,11 @@ public class TrackPlanner : MonoBehaviour
                     {
                         // Pressing x deletes the route
 
+                        foreach (SingleTrack st in draftRouteTracks)
+                        {
+                            st.GetComponent<Highlightable>().Dehighlight();
+                        }
+
                         draftRouteTracks.Clear();
                         draftRouteInverse.Clear();
 
@@ -380,6 +413,11 @@ public class TrackPlanner : MonoBehaviour
                     else if (Input.GetKeyDown(KeyCode.G))
                     {
                         // Hide the route planning and switch to inactive
+
+                        foreach (SingleTrack st in draftRouteTracks)
+                        {
+                            st.GetComponent<Highlightable>().Dehighlight();
+                        }
 
                         planningState = PlanningState.Inactive;
                     }
@@ -390,10 +428,13 @@ public class TrackPlanner : MonoBehaviour
                         {
                             //Raycasting rails
 
+                            Highlight(hit.transform.GetComponent<Highlightable>());
+
                             if (Input.GetMouseButtonDown(0))
                             {
                                 // Clicking a rail adds it to the route
 
+                                hit.transform.GetComponent<Highlightable>().Highlight();
                                 draftRouteTracks.Add(hit.transform.GetComponent<SingleTrack>());
                                 draftRouteInverse.Add(false);
 
@@ -406,6 +447,7 @@ public class TrackPlanner : MonoBehaviour
                                 int railIndex = draftRouteTracks.IndexOf(hit.transform.GetComponent<SingleTrack>());
                                 if(railIndex > -1)
                                 {
+                                    hit.transform.GetComponent<Highlightable>().Dehighlight();
                                     draftRouteTracks.RemoveAt(railIndex);
                                     draftRouteInverse.RemoveAt(railIndex);
 
@@ -418,5 +460,18 @@ public class TrackPlanner : MonoBehaviour
                 break;
         }
         
+    }
+
+    void Highlight(Highlightable hl)
+    {
+        if (lastHighlighted != null)
+        {
+            Debug.Log("THERE IS ALREADY A HIGHLIGHTED!");
+
+            lastHighlighted.Dehighlight();
+        }
+
+        lastHighlighted = hl;
+        lastHighlighted.Highlight();
     }
 }
